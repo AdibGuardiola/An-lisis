@@ -242,15 +242,6 @@ def play_sound():
     """
     st.components.v1.html(audio_html, height=0)
 
-def play_sound():
-    # Sonido de campana corto en base64
-    audio_html = """
-        <audio autoplay>
-            <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3" type="audio/mpeg">
-        </audio>
-    """
-    st.components.v1.html(audio_html, height=0)
-
 def fetch_and_alert(symbol, label):
     """
     Función para obtener datos y enviar alertas. 
@@ -265,10 +256,13 @@ def fetch_and_alert(symbol, label):
             return None
             
         # Resamplear a H4
-        df_h4 = df.resample('4H').agg({
+        df_h4 = df.resample('4h').agg({
             'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'
         }).dropna()
         
+        if df_h4.empty or len(df_h4) < 2:
+            return None
+            
         df_h4["EMA5"] = df_h4["Close"].ewm(span=EMA_FAST).mean()
         df_h4["EMA15"] = df_h4["Close"].ewm(span=EMA_SLOW).mean()
         
@@ -279,6 +273,10 @@ def fetch_and_alert(symbol, label):
         # Lógica de Cruce para Alarma (usando Session State específico por símbolo)
         key_ema5 = f"prev_ema5_{symbol}"
         key_ema15 = f"prev_ema15_{symbol}"
+        
+        # Inicializar si no existen
+        if key_ema5 not in st.session_state: st.session_state[key_ema5] = ema5
+        if key_ema15 not in st.session_state: st.session_state[key_ema15] = ema15
         
         if key_ema5 in st.session_state and key_ema15 in st.session_state:
             # Detectar cruce al alza
