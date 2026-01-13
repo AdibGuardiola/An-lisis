@@ -405,11 +405,16 @@ def obtener_datos_macro():
 st.markdown("<h1 style='text-align: center; font-size: 56px; color: #4facfe;'>🪙 MONITOR DE TRADING - ORO</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #4facfe; font-size: 18px;'>Análisis en tiempo real con señales de compra</p>", unsafe_allow_html=True)
 
+
+# --- PROCESAMIENTO DE ALERTAS (Background) ---
+# Esto se ejecuta siempre antes de las pestañas
+df_gold = fetch_and_alert(SYMBOL_GOLD, "ORO")
+df_silver = fetch_and_alert(SYMBOL_SILVER, "PLATA")
+
 # Tabs principales
 tab_intro, tab_oro, tab_plata, tab_macro = st.tabs(["🏠 Inicio / Estrategia", "🥇 Monitor Oro", "🥈 Monitor Plata", "🌍 Contexto Macro"])
 
 with tab_intro:
-    # ... (contenido existente de tab_intro)
     st.markdown("## 🧠 Análisis Lógico y Matemático")
     
     col_teoria, col_calc = st.columns([1, 1])
@@ -518,108 +523,61 @@ with tab_intro:
         
         sub_col1, sub_col2 = st.columns(2)
         with sub_col1:
-            calc_capital = st.number_input("Capital (€)", value=10000, step=1000)
-            calc_risk_pct = st.number_input("Riesgo (%)", value=1.0, step=0.1)
+            calc_capital_val = st.number_input("Capital (€)", value=10000, step=1000)
+            calc_risk_pct_val = st.number_input("Riesgo (%)", value=1.0, step=0.1)
         with sub_col2:
-            calc_sl_pips = st.number_input("Stop Loss (Pips)", value=30, step=5)
-            calc_pip_value = st.number_input("Valor Pip estándar ($)", value=10.0, disabled=True, help="1 Lote Estándar de Oro ~ $10/pip")
+            calc_sl_pips_val = st.number_input("Stop Loss (Pips)", value=30, step=5)
+            calc_pip_value_val = st.number_input("Valor Pip estándar ($)", value=10.0, disabled=True)
 
-        risk_amount = calc_capital * (calc_risk_pct / 100)
-        # Lotes = Riesgo / (SL * ValorPip)
-        # Ajuste aproximado para XAUUSD donde 1 pip (0.10 mov) = $10 en 1 lote estándar
-        lots = risk_amount / (calc_sl_pips * calc_pip_value)
+        risk_amount_val = calc_capital_val * (calc_risk_pct_val / 100)
+        lots_val = risk_amount_val / (calc_sl_pips_val * calc_pip_value_val)
         
         st.success(f"""
         **Resultados de Gestión:**
-        *   Dinero en Riesgo: **€{risk_amount:.2f}**
-        *   Lotes Recomendados: **{lots:.2f} Lotes**
+        *   Dinero en Riesgo: **€{risk_amount_val:.2f}**
+        *   Lotes Recomendados: **{lots_val:.2f} Lotes**
         """)
 
     st.markdown("---")
     st.markdown("## 🎲 Simulación de Monte Carlo")
     
-    # Inputs simulación
     sc1, sc2, sc3, sc4 = st.columns(4)
-    sim_win_rate = sc1.slider("Win Rate (%)", 30, 80, 55) / 100
-    sim_rr = sc2.slider("Ratio Riesgo/Beneficio", 1.0, 5.0, 2.0)
-    sim_trades = sc3.slider("Nº de Operaciones", 50, 1000, 300)
-    sim_sims = 50 # Limitado para performance en web
-    
-    # Lógica de cálculo (adaptada del script de usuario)
-    riesgo_sim = calc_capital * (calc_risk_pct / 100)
-    ganancia_sim = riesgo_sim * sim_rr
-    
-    # Esperanza
-    esperanza_mat = (sim_win_rate * ganancia_sim) - ((1 - sim_win_rate) * riesgo_sim)
-    
-    # Probabilidad de Ruina (aprox)
-    # Formula simple: ((1 - Edge) / (1 + Edge)) ^ Units
-    # Edge = Win% - Loss%
-    if sim_win_rate > 0.5:
-        edge = sim_win_rate - (1 - sim_win_rate)
-        units = calc_capital / riesgo_sim
-        prob_ruina = ((1 - edge) / (1 + edge)) ** units
-    else:
-        prob_ruina = 1.0
-
-    mc1, mc2 = st.columns(2)
-    mc1.metric("Esperanza Matemática (por trade)", f"€{esperanza_mat:.2f}")
-    mc2.metric("Probabilidad de Ruina Teórica", f"{prob_ruina*100:.4f}%")
+    sim_win_rate_val = sc1.slider("Win Rate (%)", 30, 80, 55) / 100
+    sim_rr_val = sc2.slider("Ratio Riesgo/Beneficio", 1.0, 5.0, 2.0)
+    sim_trades_val = sc3.slider("Nº de Operaciones", 50, 1000, 300)
     
     if st.button("▶️ Ejecutar Simulación"):
+        riesgo_sim_v = calc_capital_val * (calc_risk_pct_val / 100)
+        ganancia_sim_v = riesgo_sim_v * sim_rr_val
         equity_curves = []
         final_capitals = []
         
-        for _ in range(sim_sims):
-            capital = calc_capital
-            curve = [capital]
-            for _ in range(sim_trades):
-                if np.random.rand() < sim_win_rate:
-                    capital += ganancia_sim
-                else:
-                    capital -= riesgo_sim
-                curve.append(capital)
-                if capital <= 0: break
+        for _ in range(50):
+            cap = calc_capital_val
+            curve = [cap]
+            for _ in range(sim_trades_val):
+                if np.random.rand() < sim_win_rate_val: cap += ganancia_sim_v
+                else: cap -= riesgo_sim_v
+                curve.append(cap)
+                if cap <= 0: break
             equity_curves.append(curve)
-            final_capitals.append(capital)
+            final_capitals.append(cap)
             
-        # Gráfico de Equity
         fig_eq = go.Figure()
         for curve in equity_curves:
             fig_eq.add_trace(go.Scatter(y=curve, mode='lines', line=dict(width=1), opacity=0.3, showlegend=False))
         
-        # Añadir promedio
-        avg_curve = np.mean([len(c)==len(equity_curves[0]) and c or c+[c[-1]]*(len(equity_curves[0])-len(c)) for c in equity_curves], axis=0)
-        fig_eq.add_trace(go.Scatter(y=avg_curve, mode='lines', name='Promedio', line=dict(color='#38ef7d', width=3)))
+        avg_c = np.mean([len(c)==len(equity_curves[0]) and c or c+[c[-1]]*(len(equity_curves[0])-len(c)) for c in equity_curves], axis=0)
+        fig_eq.add_trace(go.Scatter(y=avg_c, mode='lines', name='Promedio', line=dict(color='#38ef7d', width=3)))
+        fig_eq.update_layout(title="Curvas de Equity (50 Simulaciones)", template="plotly_dark", height=400)
         
-        fig_eq.update_layout(
-            title="Curvas de Equity (50 Simulaciones)",
-            xaxis_title="Nº Operaciones",
-            yaxis_title="Capital (€)",
-            template="plotly_dark",
-            height=400
-        )
-        
-        # Histograma
         fig_hist = go.Figure()
         fig_hist.add_trace(go.Histogram(x=final_capitals, marker_color='#4facfe', opacity=0.7))
-        fig_hist.update_layout(
-             title="Distribución de Capital Final",
-             xaxis_title="Capital Final (€)",
-             template="plotly_dark",
-             height=400
-        )
+        fig_hist.update_layout(title="Distribución de Capital Final", template="plotly_dark", height=400)
         
         g1, g2 = st.columns(2)
         g1.plotly_chart(fig_eq, use_container_width=True)
         g2.plotly_chart(fig_hist, use_container_width=True)
-# --- PROCESAMIENTO DE ALERTAS (Background) ---
-# Esto se ejecuta siempre, independientemente de la pestaña abierta
-df_gold = fetch_and_alert(SYMBOL_GOLD, "ORO")
-df_silver = fetch_and_alert(SYMBOL_SILVER, "PLATA")
-
-# Tabs principales
-tab_intro, tab_oro, tab_plata, tab_macro = st.tabs(["🏠 Inicio / Estrategia", "🥇 Monitor Oro", "🥈 Monitor Plata", "🌍 Contexto Macro"])
 
 with tab_oro:
     display_monitor(df_gold, SYMBOL_GOLD, "ORO")
