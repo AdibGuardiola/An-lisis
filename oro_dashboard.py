@@ -257,12 +257,42 @@ def fetch_and_alert(symbol, label):
         if df.empty:
             return None
             
-        # Calcular VWAP (Volume Weighted Average Price) intradía
-        # Fórmula: CumSum(Price * Volume) / CumSum(Volume)
-        # Se resetea cada día (groupby date)
         v = df['Volume']
         tp = (df['High'] + df['Low'] + df['Close']) / 3
-        df['VWAP'] = (tp * v).groupby(df.index.date).cumsum() / v.groupby(df.index.date).cumsum()
+        
+        # -----------------------------------------------------------
+        # CÁLCULO VWAP INSTITUCIONAL (Loop Explícito)
+        # Condición: Resetear acumulados al cambiar el día
+        # -----------------------------------------------------------
+        vwap_values = []
+        cum_pv = 0.0
+        cum_vol = 0.0
+        previous_date = None
+
+        for i in range(len(df)):
+            current_date = df.index[i].date()
+            
+            # Reset diario
+            if previous_date is None or current_date != previous_date:
+                cum_pv = 0.0
+                cum_vol = 0.0
+
+            # Acumulación
+            price = tp.iloc[i]
+            vol = v.iloc[i]
+            
+            if vol > 0:
+                cum_pv += price * vol
+                cum_vol += vol
+                vwap_values.append(cum_pv / cum_vol)
+            else:
+                # Si no hay volumen, mantenemos el anterior o None
+                vwap_values.append(vwap_values[-1] if vwap_values else price)
+            
+            previous_date = current_date
+
+        df['VWAP'] = vwap_values
+        # -----------------------------------------------------------
 
         # Resamplear a H4
         agg_dict = {
