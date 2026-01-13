@@ -195,7 +195,7 @@ with st.sidebar:
     ENABLE_TELEGRAM = st.checkbox("Activar Telegram", value=True)
     
     st.markdown("### Actualización")
-    REFRESH_INTERVAL = st.slider("Intervalo de actualización (seg)", 30, 300, 60, 30)
+    REFRESH_INTERVAL = st.slider("Intervalo de actualización (seg)", 60, 1200, 600, 60)
 
     if st.button("🔔 Probar Telegram", width="stretch"):
         send_telegram_message("✅ *Prueba de conexión*\nEl bot está configurado correctamente y listo para recibir alertas de Oro y Plata.")
