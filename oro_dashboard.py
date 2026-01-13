@@ -374,7 +374,7 @@ def display_monitor(df, symbol, label):
         colors = ['red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green' for i in range(len(df))]
         fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volumen', marker_color=colors, opacity=0.5), row=2, col=1)
         fig.update_layout(template='plotly_dark', height=700, showlegend=True, xaxis_rangeslider_visible=False, hovermode='x unified')
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
 # Función para obtener datos macro
 @st.cache_data(ttl=3600)
@@ -450,7 +450,7 @@ with tab_intro:
             st.markdown("#### 5️⃣ Esperanza Matemática General")
             st.markdown(r"Aplicando la definición y factorizando el Riesgo ($R$):")
             st.latex(r"\mathbb{E}[X] = R(P_g \cdot RR - (1 - P_g))")
-            st.warning("☝️ Esta es la **Fórmula Fundamental del Trading Cuantitativo**.")
+            st.warning(r"☝️ Esta es la **Fórmula Fundamental del Trading Cuantitativo**.")
 
             st.markdown("#### 6️⃣ Condición para Ganar Dinero")
             st.markdown(r"Para ser rentable necesitamos $\mathbb{E}[X] > 0$, lo que implica:")
@@ -578,8 +578,8 @@ with tab_intro:
         fig_hist.update_layout(title="Distribución de Capital Final", template="plotly_dark", height=400)
         
         g1, g2 = st.columns(2)
-        g1.plotly_chart(fig_eq, use_container_width=True)
-        g2.plotly_chart(fig_hist, use_container_width=True)
+        g1.plotly_chart(fig_eq)
+        g2.plotly_chart(fig_hist)
 
 with tab_oro:
     display_monitor(df_gold, SYMBOL_GOLD, "ORO")
@@ -617,7 +617,7 @@ with tab_macro:
                     hovermode='x unified',
                     xaxis_tickformat='%d %b %y'
                 )
-                st.plotly_chart(fig_dxy, use_container_width=True)
+                st.plotly_chart(fig_dxy)
             
             if "SP500" in data_macro:
                 fig_sp = go.Figure()
@@ -637,7 +637,7 @@ with tab_macro:
                     hovermode='x unified',
                     xaxis_tickformat='%d %b %y'
                 )
-                st.plotly_chart(fig_sp, use_container_width=True)
+                st.plotly_chart(fig_sp)
         
         with col2:
             if "US10Y" in data_macro:
@@ -658,7 +658,7 @@ with tab_macro:
                     hovermode='x unified',
                     xaxis_tickformat='%d %b %y'
                 )
-                st.plotly_chart(fig_us10y, use_container_width=True)
+                st.plotly_chart(fig_us10y)
             
             if "Plata" in data_macro:
                 fig_plata = go.Figure()
@@ -678,7 +678,7 @@ with tab_macro:
                     hovermode='x unified',
                     xaxis_tickformat='%d %b %y'
                 )
-                st.plotly_chart(fig_plata, use_container_width=True)
+                st.plotly_chart(fig_plata)
     else:
         st.warning("No se pudieron cargar datos macro. Verifica tu conexión.")
 
