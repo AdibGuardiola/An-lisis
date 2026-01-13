@@ -185,7 +185,11 @@ with st.sidebar:
     
     st.markdown("### Actualización")
     REFRESH_INTERVAL = st.slider("Intervalo de actualización (seg)", 30, 300, 60, 30)
-    
+
+    if st.button("🔔 Probar Telegram", use_container_width=True):
+        send_telegram_message("✅ *Prueba de conexión*\nEl bot está configurado correctamente y listo para recibir alertas de Oro y Plata.")
+        st.toast("Mensaje de prueba enviado!", icon="🔔")
+
     if st.button("🔄 Actualizar Ahora", use_container_width=True):
         st.rerun()
 
