@@ -182,7 +182,7 @@ with st.sidebar:
     ADR_PERIOD = st.slider("Período ADR", 5, 30, 14)
     EMA_FAST = st.slider("EMA Rápida", 3, 10, 5)
     EMA_SLOW = st.slider("EMA Lenta", 10, 30, 15)
-    LRS_PERIOD = st.slider("Período Linear Regression Slope", 5, 50, 14)
+    LRS_PERIOD = st.slider("Período Linear Regression Slope", 5, 50, 9)
     
     st.markdown("### Umbrales de Señal")
     MIN_EMA_DIST = st.slider("Distancia EMA mínima (%)", 0.0, 0.5, 0.10, 0.01)
@@ -391,17 +391,22 @@ def display_monitor(df, symbol, label):
         st.progress(min(consumo_adr, 1.0))
         st.markdown("### Acción del Precio con EMAs")
         
-        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05, row_heights=[0.7, 0.3])
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_heights=[0.6, 0.2, 0.2])
         fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Precio'), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA5'], mode='lines', name=f'EMA {EMA_FAST}', line=dict(color='#38ef7d', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA15'], mode='lines', name=f'EMA {EMA_SLOW}', line=dict(color='#ee0979', width=2)), row=1, col=1)
         
-        # Añadir LRS como subtítulo o anotación? No, mejor solo en métricas, o quizás en hover. 
-        # El usuario pidió "mostrarlo junto a los demás datos", las métricas ya lo cubren.
-        
+        # Volumen en Fila 2
         colors = [('red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green') for i in range(len(df))]
         fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volumen', marker_color=colors, opacity=0.5), row=2, col=1)
-        fig.update_layout(template='plotly_dark', height=700, showlegend=True, xaxis_rangeslider_visible=False, hovermode='x unified')
+        
+        # LRS en Fila 3
+        if "LRS" in df.columns:
+            fig.add_trace(go.Scatter(x=df.index, y=df['LRS'], mode='lines', name=f'LRS ({LRS_PERIOD})', line=dict(color='#00f2fe', width=2), fill='tozeroy', fillcolor='rgba(0, 242, 254, 0.1)'), row=3, col=1)
+            # Línea cero para referencia
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", row=3, col=1)
+
+        fig.update_layout(template='plotly_dark', height=800, showlegend=True, xaxis_rangeslider_visible=False, hovermode='x unified')
         st.plotly_chart(fig)
 
 # Función para obtener datos macro
