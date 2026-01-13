@@ -257,51 +257,13 @@ def fetch_and_alert(symbol, label):
         if df.empty:
             return None
             
-        v = df['Volume']
-        tp = (df['High'] + df['Low'] + df['Close']) / 3
-        
-        # -----------------------------------------------------------
-        # CÁLCULO VWAP INSTITUCIONAL (Loop Explícito)
-        # Condición: Resetear acumulados al cambiar el día
-        # -----------------------------------------------------------
-        vwap_values = []
-        cum_pv = 0.0
-        cum_vol = 0.0
-        previous_date = None
-
-        for i in range(len(df)):
-            current_date = df.index[i].date()
-            
-            # Reset diario
-            if previous_date is None or current_date != previous_date:
-                cum_pv = 0.0
-                cum_vol = 0.0
-
-            # Acumulación
-            price = tp.iloc[i]
-            vol = v.iloc[i]
-            
-            if vol > 0:
-                cum_pv += price * vol
-                cum_vol += vol
-                vwap_values.append(cum_pv / cum_vol)
-            else:
-                # Si no hay volumen, mantenemos el anterior o None
-                vwap_values.append(vwap_values[-1] if vwap_values else price)
-            
-            previous_date = current_date
-
-        df['VWAP'] = vwap_values
-        # -----------------------------------------------------------
-
         # Resamplear a H4
         agg_dict = {
             'Open': 'first', 
             'High': 'max', 
             'Low': 'min', 
             'Close': 'last', 
-            'Volume': 'sum',
-            'VWAP': 'last' # Tomamos el último valor del VWAP en el periodo
+            'Volume': 'sum'
         }
         df_h4 = df.resample('4h').agg(agg_dict).dropna()
         
@@ -438,10 +400,6 @@ def display_monitor(df, symbol, label):
         fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Precio'), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA5'], mode='lines', name=f'EMA {EMA_FAST}', line=dict(color='#38ef7d', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA15'], mode='lines', name=f'EMA {EMA_SLOW}', line=dict(color='#ee0979', width=2)), row=1, col=1)
-        
-        # VWAP
-        if 'VWAP' in df.columns:
-            fig.add_trace(go.Scatter(x=df.index, y=df['VWAP'], mode='lines', name='VWAP', line=dict(color='#FF9900', width=2, dash='solid')), row=1, col=1)
         
         # volumen en Fila 2
         colors = [('red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green') for i in range(len(df))]
