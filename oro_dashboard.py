@@ -396,10 +396,61 @@ def display_monitor(df, symbol, label):
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA5'], mode='lines', name=f'EMA {EMA_FAST}', line=dict(color='#38ef7d', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA15'], mode='lines', name=f'EMA {EMA_SLOW}', line=dict(color='#ee0979', width=2)), row=1, col=1)
         
-        # Volumen en Fila 2
+        # volumen en Fila 2
         colors = [('red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green') for i in range(len(df))]
         fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volumen', marker_color=colors, opacity=0.5), row=2, col=1)
         
+        # Cruces de medias - Lógica robusta
+        df_plot = df.copy()
+        df_plot['diff'] = df_plot['EMA5'] - df_plot['EMA15']
+        
+        prev_diff = df_plot['diff'].shift(1)
+        
+        # Cruce Alcista
+        bullish_mask = (prev_diff <= 0) & (df_plot['diff'] > 0)
+        bullish_points = df_plot[bullish_mask]
+        
+        # Cruce Bajista
+        bearish_mask = (prev_diff >= 0) & (df_plot['diff'] < 0)
+        bearish_points = df_plot[bearish_mask]
+
+        # DEBUG VISUAL
+        cant_alcista = len(bullish_points)
+        cant_bajista = len(bearish_points)
+        
+        if cant_alcista > 0 or cant_bajista > 0:
+            st.success(f"📍 DETECTADOS: {cant_alcista} Alcistas | {cant_bajista} Bajistas")
+        else:
+            st.error("⚠️ 0 CRUCES DETECTADOS. Abajo muestro los datos para revisar.")
+            
+        with st.expander("🔍 VER DATOS COMPUTADOS (Debug)"):
+             st.write(df_plot[['Close', 'EMA5', 'EMA15', 'diff']].tail(24))
+
+        # Añadir trazas SIEMPRE (para verlas en leyenda)
+        fig.add_trace(go.Scatter(
+            x=bullish_points.index, 
+            y=bullish_points['EMA15'], 
+            mode='markers', 
+            name='Cruce Alcista (X)', 
+            marker=dict(symbol='x', size=15, color='#FFFF00', line=dict(width=3, color='#FFFF00'))
+        ), row=1, col=1)
+        
+        # Líneas verticales para cruces alcistas
+        for date in bullish_points.index:
+            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color="#FFFF00")
+            
+        fig.add_trace(go.Scatter(
+            x=bearish_points.index, 
+            y=bearish_points['EMA15'], 
+            mode='markers', 
+            name='Cruce Bajista (X)', 
+            marker=dict(symbol='x', size=15, color='#FFFF00', line=dict(width=3, color='#FFFF00'))
+        ), row=1, col=1)
+        
+        # Líneas verticales para cruces bajistas
+        for date in bearish_points.index:
+            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color="#FFFF00")
+
         # LRS en Fila 3
         if "LRS" in df.columns:
             fig.add_trace(go.Scatter(x=df.index, y=df['LRS'], mode='lines', name=f'LRS ({LRS_PERIOD})', line=dict(color='#00f2fe', width=2), fill='tozeroy', fillcolor='rgba(0, 242, 254, 0.1)'), row=3, col=1)
@@ -727,3 +778,9 @@ with col2:
 
 with col3:
     st.markdown("**Símbolo:** GC=F (Gold Futures)")
+
+# --- AUTO-REFRESH LOGIC ---
+if REFRESH_INTERVAL > 0:
+    st.caption(f"🔄 Actualizando automáticamente en {REFRESH_INTERVAL} segundos...")
+    time.sleep(REFRESH_INTERVAL)
+    st.rerun()
