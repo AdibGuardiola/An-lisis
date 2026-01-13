@@ -506,7 +506,7 @@ def obtener_datos_macro():
     return data
 
 # Header
-st.markdown("<h1 style='text-align: center; font-size: 56px; color: #4facfe;'>🪙 MONITOR DE TRADING - ORO</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: 56px; color: #4facfe;'>🪙 MONITOR DE TRADING - ORO Y PLATA</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #4facfe; font-size: 18px;'>Análisis en tiempo real con señales de compra</p>", unsafe_allow_html=True)
 
 
