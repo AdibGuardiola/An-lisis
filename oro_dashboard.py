@@ -430,7 +430,7 @@ with tab_intro:
             st.caption("Donde $X$ es el resultado de una operación.")
 
             st.markdown("#### 2️⃣ Modelo de Trading")
-            st.markdown("""
+            st.markdown(r"""
             Simplificamos sin perder rigor. Cada operación tiene dos estados posibles:
             *   **Ganancia ($G$):** $+R \cdot RR$
             *   **Pérdida ($P$):** $-R$
@@ -448,16 +448,16 @@ with tab_intro:
             """)
 
             st.markdown("#### 5️⃣ Esperanza Matemática General")
-            st.markdown("Aplicando la definición y factorizando el Riesgo ($R$):")
+            st.markdown(r"Aplicando la definición y factorizando el Riesgo ($R$):")
             st.latex(r"\mathbb{E}[X] = R(P_g \cdot RR - (1 - P_g))")
             st.warning("☝️ Esta es la **Fórmula Fundamental del Trading Cuantitativo**.")
 
             st.markdown("#### 6️⃣ Condición para Ganar Dinero")
-            st.markdown("Para ser rentable necesitamos $\mathbb{E}[X] > 0$, lo que implica:")
+            st.markdown(r"Para ser rentable necesitamos $\mathbb{E}[X] > 0$, lo que implica:")
             st.latex(r"P_g > \frac{1}{RR + 1}")
 
             st.markdown("#### 7️⃣ Interpretación (Win Rate Mínimo)")
-            st.markdown("""
+            st.markdown(r"""
             | Ratio R/R | Win Rate Mínimo |
             | :---: | :---: |
             | **1 : 1** | $50.0\%$ |
@@ -468,40 +468,40 @@ with tab_intro:
 
         with st.expander("📉 Probabilidad de Ruina (Teoría Formal)"):
             st.markdown("<h4 style='color: #4ECDC4;'>1️⃣ Definición del Problema</h4>", unsafe_allow_html=True)
-            st.markdown("Consideramos un capital inicial $C_0$ que evoluciona mediante operaciones independientes $X_i$:")
+            st.markdown(r"Consideramos un capital inicial $C_0$ que evoluciona mediante operaciones independientes $X_i$:")
             st.latex(r"C_n = C_0 + \sum_{i=1}^{n} X_i")
-            st.caption("La ruina ocurre si existe algún $n$ tal que $C_n \leq 0$.")
+            st.caption(r"La ruina ocurre si existe algún $n$ tal que $C_n \leq 0$.")
 
             st.markdown("<h4 style='color: #4ECDC4;'>2️⃣ Teorema Fundamental</h4>", unsafe_allow_html=True)
-            st.markdown("Si la esperanza matemática es positiva ($\mathbb{E}[X] > 0$), entonces la probabilidad de ruina es estrictamente menor que 1.")
+            st.markdown(r"Si la esperanza matemática es positiva ($\mathbb{E}[X] > 0$), entonces la probabilidad de ruina es estrictamente menor que 1.")
             st.latex(r"\mathbb{E}[X] = R(P_g \cdot RR - (1 - P_g)) > 0 \implies \text{Ruina no segura}")
 
             st.markdown("<h4 style='color: #4ECDC4;'>3️⃣ Aproximación de Cramér-Lundberg</h4>", unsafe_allow_html=True)
             st.latex(r"P_{ruina} \approx \left( \frac{1 - P_g}{P_g} \right)^{\frac{C_0}{R}}")
 
             st.markdown("<h4 style='color: #4ECDC4;'>4️⃣ Aplicación a tu Sistema</h4>", unsafe_allow_html=True)
-            st.markdown("""
+            st.markdown(r"""
             *   $P_g = 0.55$
             *   $R = 1\%$ (Capital normalizado $C_0 = 100$ unidades de riesgo)
             """)
             st.markdown("<br><br>", unsafe_allow_html=True)
             st.latex(r"P_{ruina} \approx \left( \frac{0.45}{0.55} \right)^{100} \approx 2.4 \times 10^{-9}")
-            st.success("🛡️ **Probabilidad de Ruina:** $\approx 0.00000024\%$ (Virtualmente imposibe si se respeta el plan).")
+            st.success(r"🛡️ **Probabilidad de Ruina:** $\approx 0.00000024\%$ (Virtualmente imposibe si se respeta el plan).")
             
 
         with st.expander("🚀 Optimización con Criterio de Kelly"):
             st.markdown("<h4 style='color: #FF6B6B;'>1️⃣ Definición</h4>", unsafe_allow_html=True)
-            st.markdown("Kelly maximiza el crecimiento logarítmico esperado del capital: $\max \mathbb{E}[\ln(C_{n+1})]$.")
+            st.markdown(r"Kelly maximiza el crecimiento logarítmico esperado del capital: $\max \mathbb{E}[\ln(C_{n+1})]$.")
             st.latex(r"f^* = \frac{P_g \cdot RR - (1 - P_g)}{RR}")
 
             st.markdown("<h4 style='color: #FF6B6B;'>2️⃣ Kelly Aplicado a tu Sistema</h4>", unsafe_allow_html=True)
             st.markdown("<br><br>", unsafe_allow_html=True)
             st.latex(r"P_{ruina} \approx \left( \frac{0.45}{0.55} \right)^{100}")
             st.latex(r"\approx 2.4 \times 10^{-9}")
-            st.error("⚠️ **Kelly Completo (32.5%)**: Inoperable psicológica y prácticamente.")
+            st.error(r"⚠️ **Kelly Completo (32.5%)**: Inoperable psicológica y prácticamente.")
 
             st.markdown("<h4 style='color: #FF6B6B;'>3️⃣ Kelly Fraccionado (Realidad Profesional)</h4>", unsafe_allow_html=True)
-            st.markdown("""
+            st.markdown(r"""
             | Versión | Riesgo Sugerido |
             | :--- | :--- |
             | **Kelly Completo** | $32.5\%$ |
@@ -511,7 +511,7 @@ with tab_intro:
             | **...** | ... |
             | **1/32 Kelly** | $\approx 1\%$ |
             """)
-            st.info("""
+            st.info(r"""
             👉 **Tu riesgo del 1% equivale a "Kelly muy conservador" (1/32).**
             
             Esto garantiza:
@@ -690,11 +690,7 @@ with col1:
     st.markdown(f"**Última actualización:** {datetime.now().strftime('%H:%M:%S')}")
 
 with col2:
-    st.markdown(f"**Próxima actualización:** {REFRESH_INTERVAL}s")
+    st.markdown(f"**Auto-refresh:** Desactivado (Usa el botón lateral)")
 
 with col3:
     st.markdown("**Símbolo:** GC=F (Gold Futures)")
-
-# Auto-refresh
-time.sleep(REFRESH_INTERVAL)
-st.rerun()
