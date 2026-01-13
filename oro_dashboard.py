@@ -165,6 +165,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sidebar con configuración
+def send_telegram_message(message):
+    if not ENABLE_TELEGRAM or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        return
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
+        requests.post(url, json=payload)
+    except Exception as e:
+        st.error(f"Error enviando Telegram: {e}")
+
 with st.sidebar:
     st.title("⚙️ Configuración")
     
@@ -186,11 +196,11 @@ with st.sidebar:
     st.markdown("### Actualización")
     REFRESH_INTERVAL = st.slider("Intervalo de actualización (seg)", 30, 300, 60, 30)
 
-    if st.button("🔔 Probar Telegram", use_container_width=True):
+    if st.button("🔔 Probar Telegram", width="stretch"):
         send_telegram_message("✅ *Prueba de conexión*\nEl bot está configurado correctamente y listo para recibir alertas de Oro y Plata.")
         st.toast("Mensaje de prueba enviado!", icon="🔔")
 
-    if st.button("🔄 Actualizar Ahora", use_container_width=True):
+    if st.button("🔄 Actualizar Ahora", width="stretch"):
         st.rerun()
 
 # Función para calcular ADR
@@ -223,15 +233,6 @@ def calcular_ADR(symbol, adr_period):
         st.error(f"Error calculando ADR para {symbol}: {e}")
         return None
 
-def send_telegram_message(message):
-    if not ENABLE_TELEGRAM or not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-        return
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
-        requests.post(url, json=payload)
-    except Exception as e:
-        st.error(f"Error enviando Telegram: {e}")
 
 def play_sound():
     # Sonido de campana corto en base64
