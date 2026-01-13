@@ -190,7 +190,7 @@ with st.sidebar:
     MAX_ADR_USE = st.slider("Uso máximo ADR (%)", 0.3, 1.0, 0.60, 0.05)
     
     st.markdown("### Notificaciones Telegram")
-    TELEGRAM_TOKEN = st.text_input("Bot Token", value="6075391597:AAFi28sadDJmq0rgvKG1bMnMK5hk8A1JFQU", type="password", help="Obtenlo de @BotFather")
+    TELEGRAM_TOKEN = st.text_input("Bot Token", value="6075391597:AAFi28sadDJmqOrgvKGlbMnMK5hk8A1JFQY", type="password", help="Obtenlo de @BotFather")
     TELEGRAM_CHAT_ID = st.text_input("Chat ID", value="909954663", help="Obtenlo de @userinfobot")
     ENABLE_TELEGRAM = st.checkbox("Activar Telegram", value=True)
     
