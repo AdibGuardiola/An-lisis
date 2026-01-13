@@ -257,10 +257,23 @@ def fetch_and_alert(symbol, label):
         if df.empty:
             return None
             
+        # Calcular VWAP (Volume Weighted Average Price) intradía
+        # Fórmula: CumSum(Price * Volume) / CumSum(Volume)
+        # Se resetea cada día (groupby date)
+        v = df['Volume']
+        tp = (df['High'] + df['Low'] + df['Close']) / 3
+        df['VWAP'] = (tp * v).groupby(df.index.date).cumsum() / v.groupby(df.index.date).cumsum()
+
         # Resamplear a H4
-        df_h4 = df.resample('4h').agg({
-            'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'
-        }).dropna()
+        agg_dict = {
+            'Open': 'first', 
+            'High': 'max', 
+            'Low': 'min', 
+            'Close': 'last', 
+            'Volume': 'sum',
+            'VWAP': 'last' # Tomamos el último valor del VWAP en el periodo
+        }
+        df_h4 = df.resample('4h').agg(agg_dict).dropna()
         
         if df_h4.empty or len(df_h4) < 2:
             return None
@@ -395,6 +408,10 @@ def display_monitor(df, symbol, label):
         fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Precio'), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA5'], mode='lines', name=f'EMA {EMA_FAST}', line=dict(color='#38ef7d', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA15'], mode='lines', name=f'EMA {EMA_SLOW}', line=dict(color='#ee0979', width=2)), row=1, col=1)
+        
+        # VWAP
+        if 'VWAP' in df.columns:
+            fig.add_trace(go.Scatter(x=df.index, y=df['VWAP'], mode='lines', name='VWAP', line=dict(color='#FF9900', width=2, dash='solid')), row=1, col=1)
         
         # volumen en Fila 2
         colors = [('red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green') for i in range(len(df))]
