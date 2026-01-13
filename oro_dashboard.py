@@ -432,24 +432,24 @@ def display_monitor(df, symbol, label):
             y=bullish_points['EMA15'], 
             mode='markers', 
             name='Cruce Alcista (X)', 
-            marker=dict(symbol='x', size=15, color='#FFFF00', line=dict(width=3, color='#FFFF00'))
+            marker=dict(symbol='x', size=15, color='#00FF00', line=dict(width=3, color='#00FF00'))
         ), row=1, col=1)
         
         # Líneas verticales para cruces alcistas
         for date in bullish_points.index:
-            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color="#FFFF00")
+            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color='#00FF00')
             
         fig.add_trace(go.Scatter(
             x=bearish_points.index, 
             y=bearish_points['EMA15'], 
             mode='markers', 
             name='Cruce Bajista (X)', 
-            marker=dict(symbol='x', size=15, color='#FFFF00', line=dict(width=3, color='#FFFF00'))
+            marker=dict(symbol='x', size=15, color='#FF0000', line=dict(width=3, color='#FF0000'))
         ), row=1, col=1)
         
         # Líneas verticales para cruces bajistas
         for date in bearish_points.index:
-            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color="#FFFF00")
+            fig.add_vline(x=date, line_width=1, line_dash="dash", line_color='#FF0000')
 
         # LRS en Fila 3
         if "LRS" in df.columns:
