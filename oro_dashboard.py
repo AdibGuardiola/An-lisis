@@ -426,26 +426,39 @@ def display_monitor(df, symbol, label):
         with st.expander("🔍 VER DATOS COMPUTADOS (Debug)"):
              st.write(df_plot[['Close', 'EMA5', 'EMA15', 'diff']].tail(24))
 
-        # Añadir trazas SIEMPRE (para verlas en leyenda)
-        fig.add_trace(go.Scatter(
-            x=bullish_points.index, 
-            y=bullish_points['EMA15'], 
-            mode='markers', 
-            name='Cruce Alcista (X)', 
-            marker=dict(symbol='x', size=15, color='#00FF00', line=dict(width=3, color='#00FF00'))
-        ), row=1, col=1)
+        if not bullish_points.empty:
+            # Texto para etiquetas
+            bullish_text = [f"<b>${price:.2f}</b><br>LRS: {lrs:.4f}" for price, lrs in zip(bullish_points['Close'], bullish_points.get('LRS', [0]*len(bullish_points)))]
+            
+            fig.add_trace(go.Scatter(
+                x=bullish_points.index, 
+                y=bullish_points['EMA15'], 
+                mode='markers+text', 
+                text=bullish_text,
+                textposition='top center',
+                textfont=dict(color='#00FF00', size=12),
+                name='Cruce Alcista (X)', 
+                marker=dict(symbol='x', size=15, color='#00FF00', line=dict(width=3, color='#00FF00'))
+            ), row=1, col=1)
         
         # Líneas verticales para cruces alcistas
         for date in bullish_points.index:
             fig.add_vline(x=date, line_width=1, line_dash="dash", line_color='#00FF00')
             
-        fig.add_trace(go.Scatter(
-            x=bearish_points.index, 
-            y=bearish_points['EMA15'], 
-            mode='markers', 
-            name='Cruce Bajista (X)', 
-            marker=dict(symbol='x', size=15, color='#FF0000', line=dict(width=3, color='#FF0000'))
-        ), row=1, col=1)
+        if not bearish_points.empty:
+            # Texto para etiquetas
+            bearish_text = [f"<b>${price:.2f}</b><br>LRS: {lrs:.4f}" for price, lrs in zip(bearish_points['Close'], bearish_points.get('LRS', [0]*len(bearish_points)))]
+            
+            fig.add_trace(go.Scatter(
+                x=bearish_points.index, 
+                y=bearish_points['EMA15'], 
+                mode='markers+text', 
+                text=bearish_text,
+                textposition='bottom center',
+                textfont=dict(color='#FF0000', size=12),
+                name='Cruce Bajista (X)', 
+                marker=dict(symbol='x', size=15, color='#FF0000', line=dict(width=3, color='#FF0000'))
+            ), row=1, col=1)
         
         # Líneas verticales para cruces bajistas
         for date in bearish_points.index:
