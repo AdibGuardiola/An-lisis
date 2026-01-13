@@ -182,6 +182,7 @@ with st.sidebar:
     ADR_PERIOD = st.slider("Período ADR", 5, 30, 14)
     EMA_FAST = st.slider("EMA Rápida", 3, 10, 5)
     EMA_SLOW = st.slider("EMA Lenta", 10, 30, 15)
+    LRS_PERIOD = st.slider("Período Linear Regression Slope", 5, 50, 14)
     
     st.markdown("### Umbrales de Señal")
     MIN_EMA_DIST = st.slider("Distancia EMA mínima (%)", 0.0, 0.5, 0.10, 0.01)
@@ -263,13 +264,34 @@ def fetch_and_alert(symbol, label):
         
         if df_h4.empty or len(df_h4) < 2:
             return None
-            
+
+        # Calcular EMAs
         df_h4["EMA5"] = df_h4["Close"].ewm(span=EMA_FAST).mean()
         df_h4["EMA15"] = df_h4["Close"].ewm(span=EMA_SLOW).mean()
+
+        # Calcular Linear Regression Slope (LRS)
+        def calculate_lrs(series, period):
+            n = period
+            x = np.arange(n)
+            # Pre-calculate sums for efficiency (though n is small)
+            sum_x = np.sum(x)
+            sum_x2 = np.sum(x**2)
+            divisor = n * sum_x2 - sum_x**2
+            
+            def get_slope(y):
+                if len(y) < n: return np.nan
+                sum_y = np.sum(y)
+                sum_xy = np.sum(x * y)
+                return (n * sum_xy - sum_x * sum_y) / divisor
+            
+            return series.rolling(window=n).apply(get_slope, raw=True)
+
+        df_h4["LRS"] = calculate_lrs(df_h4["Close"], LRS_PERIOD)
         
         ema5 = float(df_h4["EMA5"].iloc[-1])
         ema15 = float(df_h4["EMA15"].iloc[-1])
         close = float(df_h4["Close"].iloc[-1])
+        lrs_val = float(df_h4["LRS"].iloc[-1]) if not np.isnan(df_h4["LRS"].iloc[-1]) else 0.0
         
         # Lógica de Cruce para Alarma (usando Session State específico por símbolo)
         key_ema5 = f"prev_ema5_{symbol}"
@@ -284,13 +306,13 @@ def fetch_and_alert(symbol, label):
             if st.session_state[key_ema5] <= st.session_state[key_ema15] and ema5 > ema15:
                 # No podemos llamar a play_sound aquí directamente si no es la pestaña activa, 
                 # pero el bot de Telegram siempre recibirá el mensaje.
-                send_telegram_message(f"🚀 *CRUCE AL ALZA {label} (H4)*\nPrecio: ${close:.2f}\nEMA{EMA_FAST} ha cruzado por encima de EMA{EMA_SLOW}")
+                send_telegram_message(f"🚀 *CRUCE AL ALZA {label} (H4)*\nPrecio: ${close:.2f}\nEMA{EMA_FAST} ha cruzado por encima de EMA{EMA_SLOW}\nLRS ({LRS_PERIOD}): {lrs_val:.4f}")
                 # Guardamos bandera para globos/sonido si el usuario abre esa pestaña
                 st.session_state[f"alert_baloons_{symbol}"] = True
             
             # Detectar cruce a la baja
             elif st.session_state[key_ema5] >= st.session_state[key_ema15] and ema5 < ema15:
-                send_telegram_message(f"📉 *CRUCE A LA BAJA {label} (H4)*\nPrecio: ${close:.2f}\nEMA{EMA_FAST} ha cruzado por debajo de EMA{EMA_SLOW}")
+                send_telegram_message(f"📉 *CRUCE A LA BAJA {label} (H4)*\nPrecio: ${close:.2f}\nEMA{EMA_FAST} ha cruzado por debajo de EMA{EMA_SLOW}\nLRS ({LRS_PERIOD}): {lrs_val:.4f}")
                 st.session_state[f"alert_warning_{symbol}"] = True
 
         # Actualizar estado previo
@@ -327,7 +349,8 @@ def display_monitor(df, symbol, label):
     ema5 = float(df["EMA5"].iloc[-1])
     ema15 = float(df["EMA15"].iloc[-1])
     ema15_prev = float(df["EMA15"].iloc[-2]) if len(df) > 1 else ema15
-
+    lrs_val = float(df["LRS"].iloc[-1]) if "LRS" in df.columns and not np.isnan(df["LRS"].iloc[-1]) else 0.0
+    
     # Cálculos
     ema_dist_pct = abs(ema5 - ema15) / close * 100
     ema_slope_pct = abs(ema15 - ema15_prev) / close * 100
@@ -351,12 +374,13 @@ def display_monitor(df, symbol, label):
         else: st.markdown("<div class='wait-signal'>⏸️ ESPERAR</div>", unsafe_allow_html=True)
         
         st.markdown("<br><br>", unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric(f"EMA {EMA_FAST}", f"${ema5:.2f}")
         col2.metric(f"EMA {EMA_SLOW}", f"${ema15:.2f}")
         col3.metric("Gap EMAs", f"{ema_dist_pct:.3f}%")
         col4.metric("Pendiente Lenta", f"{ema_slope_pct:.3f}%")
-
+        col5.metric(f"LRS ({LRS_PERIOD})", f"{lrs_val:.4f}")
+        
         st.markdown("---")
         st.markdown(f"### 📊 Rango Diario Promedio (ADR)")
         c1, c2, c3 = st.columns([1, 1, 2])
@@ -372,7 +396,10 @@ def display_monitor(df, symbol, label):
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA5'], mode='lines', name=f'EMA {EMA_FAST}', line=dict(color='#38ef7d', width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=df.index, y=df['EMA15'], mode='lines', name=f'EMA {EMA_SLOW}', line=dict(color='#ee0979', width=2)), row=1, col=1)
         
-        colors = ['red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green' for i in range(len(df))]
+        # Añadir LRS como subtítulo o anotación? No, mejor solo en métricas, o quizás en hover. 
+        # El usuario pidió "mostrarlo junto a los demás datos", las métricas ya lo cubren.
+        
+        colors = [('red' if df['Close'].iloc[i] < df['Open'].iloc[i] else 'green') for i in range(len(df))]
         fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volumen', marker_color=colors, opacity=0.5), row=2, col=1)
         fig.update_layout(template='plotly_dark', height=700, showlegend=True, xaxis_rangeslider_visible=False, hovermode='x unified')
         st.plotly_chart(fig)
